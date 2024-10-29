@@ -38,7 +38,7 @@ msgid ""
 "console, using Wake On LAN (WoL)."
 msgstr ""
 "Accendi comodamente i dispositivi nella tua rete, come un NAS o una console " 
-"di gioco,utilizzando Wake On LAN (WoL)."
+"di gioco, utilizzando Wake On LAN (WoL)."
 
 #: resources/de.swsnr.turnon.metainfo.xml.in:10
 msgid "Features:"
