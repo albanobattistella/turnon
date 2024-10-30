@@ -6,12 +6,12 @@
 
 //! Utilities for the search provider of Turn On.
 
-use gettextrs::pgettext;
-use glib::{ControlFlow, Variant, VariantDict};
+use glib::{dpgettext2, ControlFlow, Variant, VariantDict};
 use gtk::gio::{DBusMethodInvocation, Notification, NotificationPriority, RegistrationId};
 use gtk::prelude::*;
 
 use crate::app::TurnOnApplication;
+use crate::dbus::invocation::DBusMethodInvocationExt;
 use crate::dbus::searchprovider2::{self, ActivateResult, GetResultMetas, MethodCall};
 use crate::model::{Device, Devices};
 
@@ -65,12 +65,14 @@ async fn activate_result(
             .wol()
             .await
             .inspect_err(|_| {
-                let notification = Notification::new(&pgettext(
+                let notification = Notification::new(&dpgettext2(
+                    None,
                     "search-provider.notification.title",
                     "Failed to send magic packet",
                 ));
                 notification.set_body(Some(
-                    &pgettext(
+                    &dpgettext2(
+                        None,
                         "search-provider.notification.body",
                         "Failed to send magic packet to mac address %1 of device %2.",
                     )
@@ -81,12 +83,14 @@ async fn activate_result(
                 app.send_notification(None, &notification);
             })
             .inspect(|_| {
-                let notification = Notification::new(&pgettext(
+                let notification = Notification::new(&dpgettext2(
+                    None,
                     "search-provider.notification.title",
                     "Sent magic packet",
                 ));
                 notification.set_body(Some(
-                    &pgettext(
+                    &dpgettext2(
+                        None,
                         "search-provider.notification.body",
                         "Sent magic packet to mac address %1 of device %2.",
                     )
@@ -170,16 +174,7 @@ fn handle_search_provider_method_call(
     invocation: DBusMethodInvocation,
 ) {
     let call = searchprovider2::MethodCall::parse(method_name, parameters);
-    glib::spawn_future_local(async move {
-        let result = match call {
-            Ok(call) => dispatch_method_call(app, call).await,
-            Err(error) => Err(error),
-        };
-        match result {
-            Ok(value) => invocation.return_value(value.as_ref()),
-            Err(error) => invocation.return_gerror(error),
-        }
-    });
+    invocation.return_future_local(async move { dispatch_method_call(app, call?).await });
 }
 
 /// Register the Turn On search provider for `app`.
